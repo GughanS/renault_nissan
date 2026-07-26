@@ -15,7 +15,7 @@ class Backbone(nn.Module):
         return_nodes = {
             'features.3': 'C3',   # Stride 8, 24 channels
             'features.8': 'C4',   # Stride 16, 48 channels
-            'features.12': 'C5'   # Stride 32, 96 channels
+            'features.12': 'C5'   # Stride 32, 576 channels
         }
         
         self.body = create_feature_extractor(mobilenet, return_nodes=return_nodes)
@@ -26,7 +26,7 @@ class Backbone(nn.Module):
                 if int(name.split('.')[1]) <= 3:
                     param.requires_grad = False
                     
-        self.out_channels = {'C3': 24, 'C4': 48, 'C5': 96}
+        self.out_channels = {'C3': 24, 'C4': 48, 'C5': 576}
 
     def forward(self, x):
         return self.body(x)
