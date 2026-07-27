@@ -2,14 +2,14 @@
 
 ![WheelEye UI Preview](https://placehold.co/1200x600/1C1C1E/4A90E2/png?text=WheelEye+Dashboard)
 
-## 📌 Overview
+## Overview
 **WheelEye** is an end-to-end computer vision platform designed to automate the visual inspection of automotive components (specifically wheels and assemblies) on a simulated factory line. It acts as an intelligent checkpoint that verifies the material, tier, size, and fastener counts against a manufacturing manifest.
 
 This project was built to demonstrate full-stack AI engineering capabilities—bridging the gap between raw machine learning models and a production-ready, deployable system with real-time telemetry.
 
 ---
 
-## 🏗 Architecture
+## Architecture
 
 The system is decoupled into three primary tiers:
 
@@ -42,7 +42,7 @@ graph LR
 
 ---
 
-## 🚀 Quick Start (Docker)
+## Quick Start (Docker)
 
 The easiest way to run the entire stack (Frontend, Backend, Prometheus, Grafana) is via Docker Compose.
 
@@ -52,14 +52,14 @@ docker-compose up -d --build
 ```
 
 **Services:**
-- 🖥️ **Frontend UI**: `http://localhost:80`
-- ⚙️ **FastAPI Swagger Docs**: `http://localhost:8000/docs`
-- 📊 **Grafana Dashboard**: `http://localhost:3000` (Login: `admin` / `admin`)
-- 📈 **Prometheus**: `http://localhost:9090`
+- **Frontend UI**: `http://localhost:80`
+- **FastAPI Swagger Docs**: `http://localhost:8000/docs`
+- **Grafana Dashboard**: `http://localhost:3000` (Login: `admin` / `admin`)
+- **Prometheus**: `http://localhost:9090`
 
 ---
 
-## 🧪 Honest Results & Limitations
+## Honest Results & Limitations
 
 Building a robust CV system for manufacturing is challenging. Here is an honest assessment of the current state of the pipeline:
 
@@ -75,7 +75,7 @@ Building a robust CV system for manufacturing is challenging. Here is an honest 
 
 ---
 
-## 🛠 Tech Stack
+## Tech Stack
 * **Machine Learning**: PyTorch, Ultralytics YOLOv8, ONNX
 * **Backend**: Python 3.10, FastAPI, Uvicorn
 * **Frontend**: React 18, Vite, Lucide Icons, pure CSS
