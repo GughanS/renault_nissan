@@ -43,7 +43,7 @@ def train(args):
     criterion = DetectionLoss(num_classes=4)
     
     # AMP Scaler
-    scaler = torch.amp.GradScaler('cuda', enabled=device.type == 'cuda')
+    scaler = torch.cuda.amp.GradScaler(enabled=device.type == 'cuda')
     
     # Anchors
     # Strides corresponding to C3, C4, C5 in our FPN
@@ -96,7 +96,7 @@ def train(args):
             
             optimizer.zero_grad()
             
-            with torch.amp.autocast('cuda', enabled=device.type == 'cuda'):
+            with torch.cuda.amp.autocast(enabled=device.type == 'cuda'):
                 pred_cls, pred_reg = model(imgs)
                 cls_loss, reg_loss, loss = criterion(pred_cls, pred_reg, target_classes, target_boxes, anchors)
             
