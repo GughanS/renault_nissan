@@ -1,0 +1,105 @@
+{
+  "demo_frames": [
+    {
+      "status": "PASS",
+      "messages": ["Assembly verified successfully."],
+      "detections": [
+        {"class_idx": 0, "class_name": "wheel", "score": 0.98, "box": [50, 50, 460, 460]},
+        {"class_idx": 1, "class_name": "fastener", "score": 0.92, "box": [240, 200, 260, 220]},
+        {"class_idx": 1, "class_name": "fastener", "score": 0.89, "box": [220, 270, 240, 290]},
+        {"class_idx": 1, "class_name": "fastener", "score": 0.95, "box": [270, 280, 290, 300]},
+        {"class_idx": 1, "class_name": "fastener", "score": 0.91, "box": [290, 230, 310, 250]},
+        {"class_idx": 1, "class_name": "fastener", "score": 0.88, "box": [250, 280, 270, 300]}
+      ],
+      "classification": {
+        "material": "Alloy",
+        "tier": "Premium",
+        "size": "18_inch"
+      },
+      "thumbnail": "https://placehold.co/100x100/242424/34C759/png?text=OK"
+    },
+    {
+      "status": "PASS",
+      "messages": ["Assembly verified successfully."],
+      "detections": [
+        {"class_idx": 0, "class_name": "wheel", "score": 0.96, "box": [48, 52, 458, 462]},
+        {"class_idx": 1, "class_name": "fastener", "score": 0.91, "box": [242, 202, 262, 222]},
+        {"class_idx": 1, "class_name": "fastener", "score": 0.88, "box": [222, 272, 242, 292]},
+        {"class_idx": 1, "class_name": "fastener", "score": 0.94, "box": [272, 282, 292, 302]},
+        {"class_idx": 1, "class_name": "fastener", "score": 0.90, "box": [292, 232, 312, 252]},
+        {"class_idx": 1, "class_name": "fastener", "score": 0.89, "box": [252, 282, 272, 302]}
+      ],
+      "classification": {
+        "material": "Steel",
+        "tier": "Standard",
+        "size": "17_inch"
+      },
+      "thumbnail": "https://placehold.co/100x100/242424/34C759/png?text=OK"
+    },
+    {
+      "status": "FAIL",
+      "messages": [
+        "Expected 5 fasteners, found 4"
+      ],
+      "detections": [
+        {"class_idx": 0, "class_name": "wheel", "score": 0.97, "box": [45, 45, 465, 465]},
+        {"class_idx": 1, "class_name": "fastener", "score": 0.94, "box": [240, 200, 260, 220]},
+        {"class_idx": 1, "class_name": "fastener", "score": 0.89, "box": [220, 270, 240, 290]},
+        {"class_idx": 1, "class_name": "fastener", "score": 0.93, "box": [270, 280, 290, 300]},
+        {"class_idx": 1, "class_name": "fastener", "score": 0.85, "box": [290, 230, 310, 250]}
+      ],
+      "classification": {
+        "material": "Alloy",
+        "tier": "Premium",
+        "size": "18_inch"
+      },
+      "thumbnail": "https://placehold.co/100x100/242424/FF3B30/png?text=FAIL"
+    },
+    {
+      "status": "PASS",
+      "messages": ["Assembly verified successfully."],
+      "detections": [
+        {"class_idx": 0, "class_name": "wheel", "score": 0.99, "box": [52, 48, 462, 458]},
+        {"class_idx": 1, "class_name": "fastener", "score": 0.95, "box": [238, 198, 258, 218]},
+        {"class_idx": 1, "class_name": "fastener", "score": 0.90, "box": [218, 268, 238, 288]},
+        {"class_idx": 1, "class_name": "fastener", "score": 0.96, "box": [268, 278, 288, 298]},
+        {"class_idx": 1, "class_name": "fastener", "score": 0.92, "box": [288, 228, 308, 248]},
+        {"class_idx": 1, "class_name": "fastener", "score": 0.90, "box": [248, 278, 268, 298]}
+      ],
+      "classification": {
+        "material": "Alloy",
+        "tier": "Premium",
+        "size": "19_inch"
+      },
+      "thumbnail": "https://placehold.co/100x100/242424/34C759/png?text=OK"
+    },
+    {
+      "status": "FAIL",
+      "messages": [
+        "Defects detected: scratch"
+      ],
+      "detections": [
+        {"class_idx": 0, "class_name": "wheel", "score": 0.97, "box": [50, 50, 460, 460]},
+        {"class_idx": 1, "class_name": "fastener", "score": 0.94, "box": [240, 200, 260, 220]},
+        {"class_idx": 1, "class_name": "fastener", "score": 0.89, "box": [220, 270, 240, 290]},
+        {"class_idx": 1, "class_name": "fastener", "score": 0.93, "box": [270, 280, 290, 300]},
+        {"class_idx": 1, "class_name": "fastener", "score": 0.85, "box": [290, 230, 310, 250]},
+        {"class_idx": 1, "class_name": "fastener", "score": 0.88, "box": [250, 280, 270, 300]},
+        {"class_idx": 2, "class_name": "scratch", "score": 0.82, "box": [100, 150, 140, 200]}
+      ],
+      "classification": {
+        "material": "Steel",
+        "tier": "Standard",
+        "size": "18_inch"
+      },
+      "thumbnail": "https://placehold.co/100x100/242424/FF3B30/png?text=FAIL"
+    }
+  ],
+  "stats": {
+    "station_id": "ST-42B",
+    "uptime": "214:12:05",
+    "units_inspected": "14,028",
+    "pass_rate": "98.4%",
+    "avg_latency": "14.2ms"
+  }
+}

@@ -1,0 +1,21 @@
+FROM python:3.10-slim
+
+WORKDIR /app
+
+# Install system dependencies (needed for opencv)
+RUN apt-get update && apt-get install -y libgl1 libglib2.0-0 && rm -rf /var/lib/apt/lists/*
+
+# Install python dependencies
+COPY requirements.txt .
+# Add API dependencies if not in requirements.txt
+RUN pip install --no-cache-dir -r requirements.txt fastapi uvicorn python-multipart prometheus-fastapi-instrumentator
+
+# Copy application code
+COPY wheeleye/ wheeleye/
+
+# The weights directory will be mounted via docker-compose to keep image size small
+
+ENV PYTHONPATH=/app
+EXPOSE 8000
+
+CMD ["uvicorn", "wheeleye.api.main:app", "--host", "0.0.0.0", "--port", "8000"]
