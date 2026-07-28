@@ -81,3 +81,26 @@ Building a robust CV system for manufacturing is challenging. Here is an honest 
 * **Frontend**: React 18, Vite, Lucide Icons, pure CSS
 * **DevOps**: Docker, Docker Compose, GitHub Actions
 * **Telemetry**: Prometheus, Grafana
+
+---
+
+## Debugging & Lessons Learned
+
+During the Phase 5 integration, we encountered a critical, silent failure mode in the custom detector: the trained model consistently predicted `0` bounding boxes. Crucially, the training loss had decreased and plateaued normally, masking the fact that the model was completely broken.
+
+### The Symptom
+The ONNX-exported detector failed to locate any objects, even on the training data. There were no stack traces, shape mismatches, or runtime errors during training.
+
+### The Root Cause
+Two silent bugs worked together to scramble the network:
+1. **Tensor Index Contract Violation:** Inside the detector head (`models/detector.py`), the output tensor was flattened via `permute(0, 1, 3, 4, 2)` leading to a flat shape mapped as `(B, num_anchors, H, W, num_classes)`. However, the ground-truth target generator (`utils/anchors.py`) built its targets by iterating over H, then W, then anchors, expecting a flattened structure of `(B, H*W, num_anchors, num_classes)`. 
+   * **Consequence:** The network's predictions for the top-left of the image were being penalized against ground-truth objects in the bottom-right of the image. The gradients were pure noise.
+2. **Preprocessing Mismatch:** The training loader fed raw `[0, 1]` tensors to the model, but the `verifier.py` inference script attempted to apply ImageNet normalization. This distribution shift hid the first bug, as we initially assumed the normalization was the only culprit.
+
+### The Fix & Structural Safeguards
+Rather than just changing the permute to the correct `permute(0, 3, 4, 1, 2)` and moving on, we implemented a structural post-mortem recovery:
+* **`tests/test_tensor_contract.py`:** A permanent unit test that simulates the exact reshape/permute path on a dummy tensor, plants a marker at a known `(h, w, anchor)` cell, and asserts it lands at the exact 1D flattened index expected by the target generator.
+* **Unified Preprocessing (`wheeleye/preprocessing.py`):** We stripped out the duplicated, divergent transforms from `yolo_dataset.py` and `verifier.py` and centralized them. We added `tests/test_preprocessing_parity.py` to prove a raw image passed through both pipelines yields the identical tensor.
+* **Overfit Sanity Check (`scripts/sanity_check_overfit.py`):** We wrote a tiny-batch CPU training script that takes 8 images and trains for 50 steps. Before committing to a costly Kaggle training run, this script proves that the loss rapidly collapses toward zero and the mapped bounding boxes mathematically align with the ground truth.
+
+**Takeaway:** A decreasing loss curve does not prove a model is learning the correct objective. Silent coordinate mapping errors must be verified with explicit index contract tests and tiny-batch overfitting checks before spending compute budgets.

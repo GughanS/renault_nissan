@@ -15,7 +15,13 @@ class YOLODataset(Dataset):
         self.img_dir = img_dir
         self.label_dir = label_dir
         self.img_size = img_size
-        self.transforms = transforms
+        
+        if transforms is None:
+            from wheeleye.preprocessing import get_train_transforms
+            self.transforms = get_train_transforms(img_size, augment=augment)
+        else:
+            self.transforms = transforms
+            
         self.mosaic = mosaic
         self.augment = augment
 
@@ -34,7 +40,7 @@ class YOLODataset(Dataset):
         img = Image.open(img_path).convert('RGB')
         orig_w, orig_h = img.size
 
-        # Resize image
+        # Resize image BEFORE mosaic/augmentations
         img = img.resize(self.img_size)
 
         # Get label path

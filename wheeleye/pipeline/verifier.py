@@ -7,6 +7,8 @@ from PIL import Image
 from wheeleye.models.detector import WheelEyeDetector
 from wheeleye.models.classifier import WheelEyeClassifier
 from wheeleye.utils.anchors import generate_anchors, decode_boxes
+from wheeleye.utils.nms import non_max_suppression
+from wheeleye.preprocessing import get_inference_transforms
 
 try:
     import onnxruntime as ort
@@ -79,16 +81,8 @@ class WheelEyeVerifier:
                                         scales, aspect_ratios).to(self.device)
 
         # Transforms
-        self.det_transform = T.Compose([
-            T.Resize(self.image_size),
-            T.ToTensor()
-        ])
-
-        self.cls_transform = T.Compose([
-            T.Resize((224, 224)),
-            T.ToTensor(),
-            T.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
-        ])
+        self.det_transform = get_inference_transforms(self.image_size)
+        self.cls_transform = get_inference_transforms((224, 224))
 
         # Class mappings
         self.det_classes = ['wheel', 'fastener', 'valve_stem', 'center_cap']
