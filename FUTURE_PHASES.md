@@ -19,7 +19,7 @@ This document outlines the phases for the upcoming development cycles to upgrade
 ## Phase 4: Production Training Pipeline (Complete)
 - [x] Add **Cosine Annealing Learning Rate** schedules to `train_detect.py` to stabilize the loss curve.
 - [x] Introduce **EMA (Exponential Moving Average)** weight updates during training to achieve higher peak accuracy and stability.
-- [ ] Train the upgraded model on the new photorealistic dataset.
+- [x] Train the upgraded model on the new photorealistic dataset.
 
 ## Phase 5: High-Efficiency Export & Deployment (Complete)
 - [x] Develop `scripts/export.py` to strip training-specific tensors and export the `WheelEyeDetector` to the **ONNX** format, specifically optimized for NVIDIA Jetson deployment.

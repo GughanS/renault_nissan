@@ -81,8 +81,7 @@ class WheelEyeVerifier:
         # Transforms
         self.det_transform = T.Compose([
             T.Resize(self.image_size),
-            T.ToTensor(),
-            T.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
+            T.ToTensor()
         ])
 
         self.cls_transform = T.Compose([
@@ -133,7 +132,7 @@ class WheelEyeVerifier:
     # ------------------------------------------------------------------
 
     def _postprocess_detections(self, cls_scores, bbox_preds,
-                                conf_thresh=0.8, iou_thresh=0.4):
+                                conf_thresh=0.1, iou_thresh=0.4):
         """Decode bounding boxes and apply NMS."""
         # cls_scores: (B, N, C), bbox_preds: (B, N, 4)
         cls_scores = torch.sigmoid(cls_scores[0])  # single image

@@ -1,3 +1,4 @@
+import math
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
@@ -151,13 +152,13 @@ class DecoupledHead(nn.Module):
         # Classification output: (B, num_anchors * num_classes, H, W)
         cls_out = self.cls_conv(p)
         cls_out = cls_out.view(B, self.num_anchors, self.num_classes, H, W)
-        cls_out = cls_out.permute(0, 1, 3, 4, 2).contiguous()
+        cls_out = cls_out.permute(0, 3, 4, 1, 2).contiguous()
         cls_out = cls_out.view(B, -1, self.num_classes)
         
         # Regression output: (B, num_anchors * 4, H, W)
         reg_out = self.reg_conv(p)
         reg_out = reg_out.view(B, self.num_anchors, 4, H, W)
-        reg_out = reg_out.permute(0, 1, 3, 4, 2).contiguous()
+        reg_out = reg_out.permute(0, 3, 4, 1, 2).contiguous()
         reg_out = reg_out.view(B, -1, 4)
         
         return cls_out, reg_out

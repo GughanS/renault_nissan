@@ -33,12 +33,12 @@ TOTAL_LATENCY_MS = 0.0
 def load_models():
     global verifier
     # We try to use the ONNX weights by default for speed, falling back to PT if needed.
-    detector_weights = "weights/best.onnx" if os.path.exists("weights/best.onnx") else "weights/best.pt"
-    classifier_weights = "weights/classify_best.onnx" if os.path.exists("weights/classify_best.onnx") else "weights/classify_best.pt"
+    detector_weights = "exports/wheeleye_detector.onnx" if os.path.exists("exports/wheeleye_detector.onnx") else "weights/best.pt"
+    classifier_weights = "exports/wheeleye_classifier.onnx" if os.path.exists("exports/wheeleye_classifier.onnx") else "weights/classify_best.pt"
     
     # If weights aren't found at root, might need to adjust paths depending on where this is run,
     # but we will assume it's run from the project root.
-    print(f"Initializing Verifier with Detector: {detector_weights}, Classifier: {classifier_weights}")
+    print(f"Initializing Verifier with Detector: {detector_weights}, Classifier: {classifier_weights}", flush=True)
     verifier = WheelEyeVerifier(
         detector_weights_path=detector_weights if os.path.exists(detector_weights) else None,
         classifier_weights_path=classifier_weights if os.path.exists(classifier_weights) else None,
