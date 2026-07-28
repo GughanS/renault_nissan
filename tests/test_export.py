@@ -32,5 +32,20 @@ class TestExportONNX(unittest.TestCase):
         self.assertTrue(os.path.exists(os.path.join(export_dir, 'wheeleye_detector.onnx')))
         self.assertTrue(os.path.exists(os.path.join(export_dir, 'wheeleye_classifier.onnx')))
 
+    def test_exported_onnx_is_valid(self):
+        """Verify exported ONNX models pass onnx.checker validation."""
+        export_dir = os.path.join(os.path.dirname(__file__), '..', 'exports_test')
+        det_path = os.path.join(export_dir, 'wheeleye_detector.onnx')
+        cls_path = os.path.join(export_dir, 'wheeleye_classifier.onnx')
+
+        if not os.path.exists(det_path):
+            self.skipTest("ONNX exports not found — run test_export_script_runs first")
+
+        import onnx
+        for path in [det_path, cls_path]:
+            model = onnx.load(path)
+            # check_model raises on failure
+            onnx.checker.check_model(model)
+
 if __name__ == '__main__':
     unittest.main()

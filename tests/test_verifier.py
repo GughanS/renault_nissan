@@ -43,5 +43,35 @@ class TestWheelEyeVerifier(unittest.TestCase):
         # or won't find a wheel at all.
         self.assertEqual(report['status'], 'FAIL')
 
+    def test_onnx_mode_if_available(self):
+        """Test ONNX-mode verifier if exports exist."""
+        export_dir = os.path.join(os.path.dirname(__file__), '..', 'exports_test')
+        det_onnx = os.path.join(export_dir, 'wheeleye_detector.onnx')
+        cls_onnx = os.path.join(export_dir, 'wheeleye_classifier.onnx')
+
+        if not (os.path.exists(det_onnx) and os.path.exists(cls_onnx)):
+            self.skipTest("ONNX exports not found — skipping ONNX mode test")
+
+        try:
+            import onnxruntime
+        except ImportError:
+            self.skipTest("onnxruntime not installed")
+
+        verifier_onnx = WheelEyeVerifier(
+            detector_weights_path=det_onnx,
+            classifier_weights_path=cls_onnx
+        )
+
+        manifest = {
+            'material': 'Alloy',
+            'tier': 'Premium',
+            'size': '18_inch',
+            'expected_fasteners': 5
+        }
+
+        report = verifier_onnx.verify(self.dummy_image_path, manifest)
+        self.assertIn('status', report)
+        self.assertIn('detections', report)
+
 if __name__ == '__main__':
     unittest.main()

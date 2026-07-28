@@ -18,6 +18,11 @@ class DummyArgs:
         self.weights_dir = weights_dir
         self.resume = False
         self.device = 'cpu' # Use CPU for local smoke test
+        self.warmup_epochs = 1
+        self.eta_min = 1e-6
+        self.use_tal = True
+        self.mosaic = False  # Disable for small smoke test dataset
+        self.augment = False
 
 def test_overfitting():
     # Setup dummy data directories

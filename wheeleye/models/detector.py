@@ -32,37 +32,92 @@ class Backbone(nn.Module):
         return self.body(x)
 
 
-class FPN(nn.Module):
+class ConvBnSiLU(nn.Module):
+    """Conv2d + BatchNorm2d + SiLU activation block."""
+    def __init__(self, in_ch, out_ch, kernel_size=3, stride=1, padding=1):
+        super().__init__()
+        self.conv = nn.Conv2d(in_ch, out_ch, kernel_size, stride=stride,
+                              padding=padding, bias=False)
+        self.bn = nn.BatchNorm2d(out_ch)
+        self.act = nn.SiLU(inplace=True)
+
+    def forward(self, x):
+        return self.act(self.bn(self.conv(x)))
+
+
+class PANet(nn.Module):
+    """
+    Path Aggregation Network (PANet) — superior multi-scale feature fusion.
+
+    Combines a top-down FPN pathway with a bottom-up path-aggregation pathway
+    so that low-level spatial detail and high-level semantics can flow in both
+    directions.  This dramatically improves small-object detection (fasteners,
+    valve stems).
+
+    Architecture:
+        Top-down (FPN):  C5 → P5;  P5↑ + C4 → P4;  P4↑ + C3 → P3
+        Bottom-up (PAN): P3 → N3;  N3↓ + P4 → N4;  N4↓ + P5 → N5
+    """
     def __init__(self, in_channels_dict, out_channels=64):
         super().__init__()
-        # Lateral convolutions to reduce/standardize channel counts
+        # ---- Top-down pathway (same as FPN) ----
         self.lat_c5 = nn.Conv2d(in_channels_dict['C5'], out_channels, 1)
         self.lat_c4 = nn.Conv2d(in_channels_dict['C4'], out_channels, 1)
         self.lat_c3 = nn.Conv2d(in_channels_dict['C3'], out_channels, 1)
-        
-        # Anti-aliasing convolutions after upsampling + addition
-        self.conv_p4 = nn.Conv2d(out_channels, out_channels, 3, padding=1)
-        self.conv_p3 = nn.Conv2d(out_channels, out_channels, 3, padding=1)
+
+        self.td_conv_p4 = ConvBnSiLU(out_channels, out_channels)
+        self.td_conv_p3 = ConvBnSiLU(out_channels, out_channels)
+
+        # ---- Bottom-up pathway (PANet addition) ----
+        self.bu_down_n3 = ConvBnSiLU(out_channels, out_channels, stride=2, padding=1)
+        self.bu_conv_n4 = ConvBnSiLU(out_channels, out_channels)
+
+        self.bu_down_n4 = ConvBnSiLU(out_channels, out_channels, stride=2, padding=1)
+        self.bu_conv_n5 = ConvBnSiLU(out_channels, out_channels)
 
     def forward(self, features):
         c3, c4, c5 = features['C3'], features['C4'], features['C5']
-        
+
+        # --- Top-down ---
         p5 = self.lat_c5(c5)
-        
+
         p4 = self.lat_c4(c4)
         p5_up = F.interpolate(p5, size=p4.shape[-2:], mode='nearest')
         p4 = p4 + p5_up
-        p4 = self.conv_p4(p4)
-        
+        p4 = self.td_conv_p4(p4)
+
         p3 = self.lat_c3(c3)
         p4_up = F.interpolate(p4, size=p3.shape[-2:], mode='nearest')
         p3 = p3 + p4_up
-        p3 = self.conv_p3(p3)
-        
-        return [p3, p4, p5]
+        p3 = self.td_conv_p3(p3)
+
+        # --- Bottom-up ---
+        n3 = p3  # N3 is just P3
+
+        n3_down = self.bu_down_n3(n3)
+        # Ensure spatial sizes match before addition
+        if n3_down.shape[-2:] != p4.shape[-2:]:
+            n3_down = F.interpolate(n3_down, size=p4.shape[-2:], mode='nearest')
+        n4 = self.bu_conv_n4(n3_down + p4)
+
+        n4_down = self.bu_down_n4(n4)
+        if n4_down.shape[-2:] != p5.shape[-2:]:
+            n4_down = F.interpolate(n4_down, size=p5.shape[-2:], mode='nearest')
+        n5 = self.bu_conv_n5(n4_down + p5)
+
+        return [n3, n4, n5]
 
 
 class DecoupledHead(nn.Module):
+    """
+    Decoupled detection head for a single FPN level.
+
+    Each FPN level gets its own independent head instance with separate
+    classification and regression branches.  This ensures strict mathematical
+    decoupling — no weight sharing across scales.
+
+    Each branch: 2× (Conv3×3 + BN + SiLU) → Conv1×1 for output.
+    """
     def __init__(self, in_channels=64, num_classes=4, num_anchors=9):
         super().__init__()
         self.num_classes = num_classes
@@ -70,15 +125,15 @@ class DecoupledHead(nn.Module):
         
         # Classification branch
         self.cls_conv = nn.Sequential(
-            nn.Conv2d(in_channels, in_channels, 3, padding=1),
-            nn.ReLU(inplace=True),
+            ConvBnSiLU(in_channels, in_channels),
+            ConvBnSiLU(in_channels, in_channels),
             nn.Conv2d(in_channels, num_anchors * num_classes, 1)
         )
         
         # Bounding box regression branch (dx, dy, dw, dh)
         self.reg_conv = nn.Sequential(
-            nn.Conv2d(in_channels, in_channels, 3, padding=1),
-            nn.ReLU(inplace=True),
+            ConvBnSiLU(in_channels, in_channels),
+            ConvBnSiLU(in_channels, in_channels),
             nn.Conv2d(in_channels, num_anchors * 4, 1)
         )
         
@@ -89,39 +144,49 @@ class DecoupledHead(nn.Module):
         bias_val = -torch.math.log((1 - pi) / pi)
         nn.init.constant_(self.cls_conv[-1].bias, bias_val)
 
-    def forward(self, features):
-        cls_scores = []
-        bbox_preds = []
+    def forward(self, p):
+        """Process a single FPN level feature map."""
+        B, C, H, W = p.shape
         
-        for p in features:
-            B, C, H, W = p.shape
-            
-            # Classification output: (B, num_anchors * num_classes, H, W)
-            cls_out = self.cls_conv(p)
-            cls_out = cls_out.view(B, self.num_anchors, self.num_classes, H, W)
-            cls_out = cls_out.permute(0, 1, 3, 4, 2).contiguous()
-            cls_scores.append(cls_out.view(B, -1, self.num_classes))
-            
-            # Regression output: (B, num_anchors * 4, H, W)
-            reg_out = self.reg_conv(p)
-            reg_out = reg_out.view(B, self.num_anchors, 4, H, W)
-            reg_out = reg_out.permute(0, 1, 3, 4, 2).contiguous()
-            bbox_preds.append(reg_out.view(B, -1, 4))
-            
-        return torch.cat(cls_scores, dim=1), torch.cat(bbox_preds, dim=1)
+        # Classification output: (B, num_anchors * num_classes, H, W)
+        cls_out = self.cls_conv(p)
+        cls_out = cls_out.view(B, self.num_anchors, self.num_classes, H, W)
+        cls_out = cls_out.permute(0, 1, 3, 4, 2).contiguous()
+        cls_out = cls_out.view(B, -1, self.num_classes)
+        
+        # Regression output: (B, num_anchors * 4, H, W)
+        reg_out = self.reg_conv(p)
+        reg_out = reg_out.view(B, self.num_anchors, 4, H, W)
+        reg_out = reg_out.permute(0, 1, 3, 4, 2).contiguous()
+        reg_out = reg_out.view(B, -1, 4)
+        
+        return cls_out, reg_out
 
 
 class WheelEyeDetector(nn.Module):
     def __init__(self, num_classes=4, num_anchors=9):
         super().__init__()
         self.backbone = Backbone(freeze_early_layers=True)
-        self.neck = FPN(self.backbone.out_channels, out_channels=64)
-        self.head = DecoupledHead(in_channels=64, num_classes=num_classes, num_anchors=num_anchors)
+        self.neck = PANet(self.backbone.out_channels, out_channels=64)
+
+        # Per-level decoupled heads — each FPN level gets its own independent
+        # set of weights.  This is the "strict mathematical decoupling" from
+        # the Phase 3 plan.
+        self.heads = nn.ModuleList([
+            DecoupledHead(in_channels=64, num_classes=num_classes, num_anchors=num_anchors)
+            for _ in range(3)  # N3, N4, N5
+        ])
 
     def forward(self, x):
         # x: (B, 3, 512, 512)
         features = self.backbone(x)
-        fpn_features = self.neck(features)
-        cls_scores, bbox_preds = self.head(fpn_features)
-        
-        return cls_scores, bbox_preds
+        pan_features = self.neck(features)
+
+        cls_scores = []
+        bbox_preds = []
+        for head, feat in zip(self.heads, pan_features):
+            cls, reg = head(feat)
+            cls_scores.append(cls)
+            bbox_preds.append(reg)
+
+        return torch.cat(cls_scores, dim=1), torch.cat(bbox_preds, dim=1)

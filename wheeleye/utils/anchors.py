@@ -1,4 +1,5 @@
 import torch
+import math
 
 def generate_anchors(image_size, strides, base_sizes, scales, aspect_ratios):
     """
@@ -49,6 +50,7 @@ def bbox_iou(box1, box2):
     """
     Compute IoU between two sets of boxes.
     Boxes should be in (cx, cy, w, h) format.
+    Returns: (N, M) IoU matrix where N = len(box1), M = len(box2).
     """
     # Convert (cx, cy, w, h) to (x1, y1, x2, y2)
     b1_x1, b1_x2 = box1[:, 0] - box1[:, 2] / 2, box1[:, 0] + box1[:, 2] / 2
@@ -73,9 +75,127 @@ def bbox_iou(box1, box2):
     
     return inter_area / union_area
 
+
+def _is_anchor_centre_in_gt(anchors, gt_boxes):
+    """
+    Check whether each anchor's centre falls inside each GT box.
+    anchors: (A, 4)  gt_boxes: (G, 4)  both in (cx, cy, w, h).
+    Returns: (A, G) boolean mask.
+    """
+    a_cx = anchors[:, 0].unsqueeze(1)  # (A, 1)
+    a_cy = anchors[:, 1].unsqueeze(1)
+
+    gt_x1 = (gt_boxes[:, 0] - gt_boxes[:, 2] / 2).unsqueeze(0)  # (1, G)
+    gt_y1 = (gt_boxes[:, 1] - gt_boxes[:, 3] / 2).unsqueeze(0)
+    gt_x2 = (gt_boxes[:, 0] + gt_boxes[:, 2] / 2).unsqueeze(0)
+    gt_y2 = (gt_boxes[:, 1] + gt_boxes[:, 3] / 2).unsqueeze(0)
+
+    in_x = (a_cx >= gt_x1) & (a_cx <= gt_x2)
+    in_y = (a_cy >= gt_y1) & (a_cy <= gt_y2)
+
+    return in_x & in_y  # (A, G)
+
+
+def task_aligned_assign(pred_cls, pred_reg, anchors, gt_boxes, gt_classes,
+                        topk=13, alpha=1.0, beta=6.0):
+    """
+    Task-Aligned Assigner (TAL) for dynamic anchor-GT matching.
+
+    Unlike Max-IoU assignment, TAL uses both predicted classification quality
+    and predicted box quality (IoU) to decide which anchors are best aligned
+    with each GT — making assignment prediction-aware and eliminating static
+    scaling bugs.
+
+    Args:
+        pred_cls: (num_anchors, num_classes) — sigmoid classification logits
+        pred_reg: (num_anchors, 4) — predicted encoded offsets
+        anchors:  (num_anchors, 4) — anchor boxes (cx, cy, w, h)
+        gt_boxes: (num_gt, 4) — ground-truth boxes (cx, cy, w, h)
+        gt_classes: (num_gt,) — class indices for each GT
+        topk: number of top-aligned anchors per GT to consider
+        alpha: exponent for classification alignment score
+        beta:  exponent for IoU alignment score
+
+    Returns:
+        target_classes: (num_anchors,)  -1 = ignore, -2 = background, 0..C-1 = assigned
+        target_boxes:   (num_anchors, 4)
+    """
+    num_anchors = anchors.shape[0]
+    num_gt = gt_boxes.shape[0]
+    device = anchors.device
+
+    if num_gt == 0:
+        return (torch.zeros(num_anchors, dtype=torch.long, device=device) - 2,
+                torch.zeros_like(anchors))
+
+    # --- Step 1: Compute alignment metric t = cls_score^α × IoU^β ---
+    # Get predicted classification scores for each GT's class
+    cls_scores = torch.sigmoid(pred_cls)  # (A, C)
+    gt_cls_scores = cls_scores[:, gt_classes]  # (A, G) — score for each GT's class
+
+    # Decode predicted boxes and compute IoU with each GT
+    decoded_preds = decode_boxes(pred_reg, anchors)  # (A, 4)
+    ious = bbox_iou(decoded_preds, gt_boxes)  # (A, G)
+
+    # Alignment metric
+    alignment = gt_cls_scores.pow(alpha) * ious.pow(beta)  # (A, G)
+
+    # --- Step 2: Spatial prior — only anchors whose centre is inside GT ---
+    centre_mask = _is_anchor_centre_in_gt(anchors, gt_boxes)  # (A, G)
+    alignment = alignment * centre_mask.float()
+
+    # --- Step 3: Select top-k anchors per GT ---
+    effective_topk = min(topk, num_anchors)
+    topk_metrics, topk_idxs = alignment.topk(effective_topk, dim=0, largest=True)  # (K, G)
+
+    # Build a candidate mask: (A, G) — True where anchor is in a GT's top-k
+    candidate_mask = torch.zeros_like(alignment, dtype=torch.bool)
+    for g in range(num_gt):
+        candidate_mask[topk_idxs[:, g], g] = True
+
+    # Also enforce centre prior on candidates
+    candidate_mask = candidate_mask & centre_mask
+
+    # --- Step 4: Resolve conflicts — if multiple GTs claim the same anchor,
+    #             assign to the GT with the highest IoU ---
+    # Count how many GTs claim each anchor
+    num_claims = candidate_mask.sum(dim=1)  # (A,)
+    conflict_mask = num_claims > 1
+
+    if conflict_mask.any():
+        # For conflicting anchors, pick the GT with the highest IoU
+        conflict_ious = ious[conflict_mask] * candidate_mask[conflict_mask].float()  # (C, G)
+        best_gt = conflict_ious.argmax(dim=1)  # (C,)
+        # Clear all claims, keep only the best
+        new_candidates = torch.zeros(conflict_mask.sum(), num_gt, dtype=torch.bool, device=device)
+        new_candidates[torch.arange(len(best_gt), device=device), best_gt] = True
+        candidate_mask[conflict_mask] = new_candidates
+
+    # --- Step 5: Build final assignments ---
+    # Each anchor is assigned to at most one GT
+    is_positive = candidate_mask.any(dim=1)  # (A,)
+    assigned_gt = candidate_mask.float().argmax(dim=1)  # (A,) — GT index for each anchor
+
+    target_classes = torch.zeros(num_anchors, dtype=torch.long, device=device) - 2  # default: bg
+    target_boxes = torch.zeros_like(anchors)
+
+    target_classes[is_positive] = gt_classes[assigned_gt[is_positive]]
+    target_boxes[is_positive] = gt_boxes[assigned_gt[is_positive]]
+
+    # Anchors between pos and neg that aren't in any top-k: leave as -2 (background)
+    # Anchors that are NOT positive and NOT clearly negative can be set to ignore (-1)
+    # but for TAL, standard practice is: positive = assigned, everything else = background.
+
+    return target_classes, target_boxes
+
+
 def assign_targets(anchors, gt_boxes, gt_classes, pos_iou_thr=0.5, neg_iou_thr=0.4):
     """
-    Assign ground truth boxes and classes to anchors using Max IoU bipartite matching.
+    Legacy assigner: Assign ground truth boxes and classes to anchors using
+    Max IoU bipartite matching.
+
+    Kept for backward compatibility. New training code should use
+    ``task_aligned_assign`` instead.
     """
     num_anchors = anchors.shape[0]
     num_gt = gt_boxes.shape[0]
@@ -95,12 +215,6 @@ def assign_targets(anchors, gt_boxes, gt_classes, pos_iou_thr=0.5, neg_iou_thr=0
     # Target labels and boxes initialization
     target_classes = torch.zeros(num_anchors, dtype=torch.long, device=device) - 1 # -1 is background/ignore
     target_boxes = torch.zeros_like(anchors)
-    
-    # Background anchors (IoU < neg_iou_thr) are labeled as 0 
-    # Wait, in our loss, class 0 might be a valid class. Let's say valid classes are 0..C-1
-    # We use num_classes as background in the Focal Loss, or we use a separate mask.
-    # Let's use -1 for ignore, num_classes (or 0 if one-hot) for background.
-    # For now, let's return pos_mask and neg_mask.
     
     pos_mask = max_ious >= pos_iou_thr
     neg_mask = max_ious < neg_iou_thr

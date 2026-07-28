@@ -350,6 +350,69 @@ body {
   color: #000;
 }
 
+/* SKU Selector Panel */
+.sku-selector {
+  padding: 16px;
+  border-bottom: 1px solid var(--color-border);
+  background-color: rgba(30, 30, 32, 0.6);
+}
+
+.sku-title {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+  color: var(--color-text-muted);
+  margin-bottom: 12px;
+  font-weight: 600;
+}
+
+.sku-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 8px;
+}
+
+.sku-label {
+  font-size: 12px;
+  color: var(--color-text-muted);
+  font-weight: 500;
+  min-width: 70px;
+}
+
+.sku-select {
+  background-color: var(--color-bg-panel);
+  color: var(--color-text-main);
+  border: 1px solid var(--color-border);
+  border-radius: 4px;
+  padding: 5px 10px;
+  font-size: 12px;
+  font-family: 'Space Mono', 'Roboto Mono', monospace;
+  cursor: pointer;
+  flex: 1;
+  margin-left: 12px;
+  appearance: auto;
+}
+
+.sku-select:hover {
+  border-color: var(--color-utility-blue);
+}
+
+.sku-select:focus {
+  outline: none;
+  border-color: var(--color-utility-blue);
+  box-shadow: 0 0 0 1px var(--color-utility-blue);
+}
+
+.sku-fastener-info {
+  margin-top: 10px;
+  padding-top: 8px;
+  border-top: 1px solid var(--color-border);
+  font-size: 11px;
+  color: var(--color-caution-amber);
+  letter-spacing: 0.5px;
+}
+
 /* Responsive Media Queries */
 @media (max-width: 900px) {
   .status-strip {

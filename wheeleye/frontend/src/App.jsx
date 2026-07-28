@@ -3,12 +3,24 @@ import { Play, Square, Upload } from 'lucide-react'
 import mockData from './mocks/inspect.json'
 import './index.css'
 
+// Tier → expected fastener count mapping
+const TIER_FASTENER_MAP = {
+  Standard: 4,
+  Premium: 5,
+  Luxury: 6
+};
+
 function App() {
   const { demo_frames } = mockData;
   
   const [isDemoRunning, setIsDemoRunning] = useState(false);
   const [taktTime, setTaktTime] = useState(1500);
   const [currentFrameIndex, setCurrentFrameIndex] = useState(0);
+  
+  // Dynamic SKU selector state
+  const [skuMaterial, setSkuMaterial] = useState('Alloy');
+  const [skuTier, setSkuTier] = useState('Premium');
+  const [skuSize, setSkuSize] = useState('18_inch');
   
   // Real backend state
   const [realReport, setRealReport] = useState(null);
@@ -38,6 +50,9 @@ function App() {
   
   const logTableRef = useRef(null);
   const fileInputRef = useRef(null);
+
+  // Compute expected fasteners from tier selection
+  const expectedFasteners = TIER_FASTENER_MAP[skuTier] || 5;
 
   // Auto-scroll logs
   useEffect(() => {
@@ -102,12 +117,12 @@ function App() {
     const formData = new FormData();
     formData.append('file', file);
     
-    // Define manifest we are checking against
+    // Build manifest dynamically from the SKU selector dropdowns
     const manifest = {
-      material: "Alloy",
-      tier: "Premium",
-      size: "18_inch",
-      expected_fasteners: 5
+      material: skuMaterial,
+      tier: skuTier,
+      size: skuSize,
+      expected_fasteners: expectedFasteners
     };
     formData.append('manifest', JSON.stringify(manifest));
 
@@ -272,8 +287,8 @@ function App() {
                 <p>{uploadError}</p>
               </div>
             ) : (
-              <>
-                <img src={previewUrl} alt="Live Inspection Frame" style={{ opacity: isUploading ? 0.3 : 1 }} />
+              <div style={{ position: 'relative', display: 'inline-block', maxWidth: '100%', maxHeight: '100%' }}>
+                <img src={previewUrl} alt="Live Inspection Frame" style={{ display: 'block', maxWidth: '100%', maxHeight: '100%', objectFit: 'contain', opacity: isUploading ? 0.3 : 1 }} />
                 {currentReport.status !== "STANDBY" && !isUploading && currentReport.detections.map(renderBBox)}
                 
                 {isUploading && (
@@ -282,7 +297,7 @@ function App() {
                     <div className="loading-text mono">INSPECTING...</div>
                   </div>
                 )}
-              </>
+              </div>
             )}
           </div>
           
@@ -304,6 +319,52 @@ function App() {
         </div>
 
         <div className="right-panel">
+          {/* SKU Selector Panel */}
+          <div className="sku-selector">
+            <div className="sku-title">Incoming Wheel SKU</div>
+            <div className="sku-row">
+              <label className="sku-label">Material</label>
+              <select
+                id="sku-material"
+                className="sku-select"
+                value={skuMaterial}
+                onChange={(e) => setSkuMaterial(e.target.value)}
+              >
+                <option value="Steel">Steel</option>
+                <option value="Alloy">Alloy</option>
+              </select>
+            </div>
+            <div className="sku-row">
+              <label className="sku-label">Tier</label>
+              <select
+                id="sku-tier"
+                className="sku-select"
+                value={skuTier}
+                onChange={(e) => setSkuTier(e.target.value)}
+              >
+                <option value="Standard">Standard</option>
+                <option value="Premium">Premium</option>
+                <option value="Luxury">Luxury</option>
+              </select>
+            </div>
+            <div className="sku-row">
+              <label className="sku-label">Size</label>
+              <select
+                id="sku-size"
+                className="sku-select"
+                value={skuSize}
+                onChange={(e) => setSkuSize(e.target.value)}
+              >
+                <option value="17_inch">17"</option>
+                <option value="18_inch">18"</option>
+                <option value="19_inch">19"</option>
+              </select>
+            </div>
+            <div className="sku-fastener-info mono">
+              Expected fasteners: {expectedFasteners}
+            </div>
+          </div>
+
           <div className="verdict-panel">
             <div className="verdict-title">Current Assembly Verdict</div>
             <div className={`verdict-block ${currentReport.status.toLowerCase()}`}>
@@ -324,7 +385,7 @@ function App() {
             <div className="detail-group">
               <div className="detail-label">Fastener Count</div>
               <div className="fastener-count mono">
-                {currentReport.status === "STANDBY" ? "0 / 0" : `${currentReport.detections.filter(d => d.class_name === 'fastener').length} / 5`}
+                {currentReport.status === "STANDBY" ? `0 / ${expectedFasteners}` : `${currentReport.detections.filter(d => d.class_name === 'fastener').length} / ${expectedFasteners}`}
               </div>
             </div>
             
