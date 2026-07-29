@@ -107,15 +107,27 @@ body {
   pointer-events: none;
 }
 
-@keyframes flash {
-  0% { opacity: 1; }
-  50% { opacity: 0.3; }
-  100% { opacity: 1; }
+@keyframes flash-red {
+  0% { 
+    border-color: #FF3B30;
+    box-shadow: 0 0 15px rgba(255, 59, 48, 0.6), inset 0 0 15px rgba(255, 59, 48, 0.3);
+    background-color: rgba(255, 59, 48, 0.1);
+  }
+  50% { 
+    border-color: #FF0000;
+    box-shadow: 0 0 35px rgba(255, 0, 0, 1), inset 0 0 35px rgba(255, 0, 0, 0.6);
+    background-color: rgba(255, 0, 0, 0.4);
+  }
+  100% { 
+    border-color: #FF3B30;
+    box-shadow: 0 0 15px rgba(255, 59, 48, 0.6), inset 0 0 15px rgba(255, 59, 48, 0.3);
+    background-color: rgba(255, 59, 48, 0.1);
+  }
 }
 
 .bbox-defect {
-  border-width: 4px;
-  animation: flash 1s infinite ease-in-out;
+  border-width: 4px !important;
+  animation: flash-red 0.6s infinite ease-in-out !important;
 }
 
 .loading-overlay {
