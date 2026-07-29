@@ -1,6 +1,6 @@
 # WheelEye: Automated Visual Inspection for Automotive Assembly
 
-![alt text](image.png)
+![alt text](docs/assets/image.png)
 
 ## Overview
 **WheelEye** is an end-to-end computer vision platform designed to automate the visual inspection of automotive components on a high-speed factory line. It acts as an intelligent checkpoint that verifies wheel configurations (material, tier, size, and fastener counts) against a manufacturing manifest and detects critical assembly defects like scratches and dents.

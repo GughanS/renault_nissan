@@ -1,24 +1,79 @@
-__pycache__/
-*.py[cod]
-*$py.class
-
-# Data and Weights
-data/
-weights/
-exports/
-exports_test/
-*.zip
-
-# Environment
+# Environments
 .env
 .venv
+env/
 venv/
 ENV/
 env.bak/
 venv.bak/
 
-# IDEs
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# Node / React
+node_modules/
+dist/
+dist-ssr/
+*.local
+.npm
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# OS Files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+desktop.ini
+
+# IDEs & Editors
 .idea/
 .vscode/
 *.swp
 *.swo
+*.swn
+.fleet/
+
+# Project Specific Data & Weights
+data/
+weights/
+exports/
+exports_test/
+*.zip
+*.onnx
+*.onnx.data
+*.pt
+
+# Testing & Coverage
+.pytest_cache/
+.coverage
+htmlcov/
+.tox/
+.nox/
+coverage.xml
+*.cover
+*.py,cover
