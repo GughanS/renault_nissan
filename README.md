@@ -17,7 +17,7 @@
 
 ---
 
-## 🏭 Overview
+## Overview
 **WheelEye** is an end-to-end computer vision platform designed to automate the visual inspection of automotive components on a high-speed factory line. 
 
 Acting as an intelligent checkpoint, it verifies complex configurations (material, tier, size, and fastener counts) against a manufacturing manifest while simultaneously detecting critical assembly defects like scratches and dents.
@@ -26,16 +26,16 @@ This system demonstrates full-stack AI engineering—bridging the gap between ra
 
 ---
 
-## ✨ Key Features
+## Key Features
 
-- 🚨 **Smart Defect Highlighting**: The UI intelligently filters out background noise, drawing bounding boxes *only* when an error occurs. Critical defects like scratches and dents flash with a high-visibility red animation to instantly alert line operators.
-- 📊 **Real-Time Observability**: Fully instrumented with Prometheus and Grafana. Custom business metrics (Pass Rate, Total Units Inspected, Average Inference Latency) are aggregated and visualized in a live dashboard.
-- ⚡ **High-Speed Inference**: By utilizing ONNX exports and optimized graph execution for the custom PANet WheelEye detector, inference runs smoothly in **<50ms on CPU**, easily meeting standard factory takt times of 1-3 seconds.
-- 🛡️ **Robust Data Augmentation**: The synthetic data generator employs OpenCV to simulate harsh factory floor conditions, including high-speed motion blur (conveyor belt simulation) and overhead glare, ensuring the model remains resilient in production.
+- **Smart Defect Highlighting**: The UI intelligently filters out background noise, drawing bounding boxes *only* when an error occurs. Critical defects like scratches and dents flash with a high-visibility red animation to instantly alert line operators.
+- **Real-Time Observability**: Fully instrumented with Prometheus and Grafana. Custom business metrics (Pass Rate, Total Units Inspected, Average Inference Latency) are aggregated and visualized in a live dashboard.
+- **High-Speed Inference**: By utilizing ONNX exports and optimized graph execution for the custom PANet WheelEye detector, inference runs smoothly in **<50ms on CPU**, easily meeting standard factory takt times of 1-3 seconds.
+- **Robust Data Augmentation**: The synthetic data generator employs OpenCV to simulate harsh factory floor conditions, including high-speed motion blur (conveyor belt simulation) and overhead glare, ensuring the model remains resilient in production.
 
 ---
 
-## 🏗️ Architecture
+## Architecture
 
 The system is decoupled into three scalable, containerized tiers:
 
@@ -68,7 +68,7 @@ graph LR
 
 ---
 
-## 🚀 Quick Start (Docker)
+## Quick Start (Docker)
 
 The easiest way to run the entire stack (Frontend, Backend, Prometheus, Grafana) is via Docker Compose.
 
@@ -81,7 +81,7 @@ cd renault_nissan
 docker-compose up -d --build
 ```
 
-### 🌐 Service Endpoints
+### Service Endpoints
 
 Once the containers are running, access the services at:
 
@@ -96,7 +96,7 @@ Once the containers are running, access the services at:
 
 ---
 
-## 🛠️ Tech Stack
+## Tech Stack
 
 ### AI & Machine Learning
 * **PyTorch** & **TorchVision**
@@ -122,7 +122,7 @@ Once the containers are running, access the services at:
 
 ---
 
-## 📖 Development & Debugging Logs
+## Development & Debugging Logs
 
 Building a robust CV system for manufacturing is challenging. A critical milestone in this project was resolving silent failure modes during the custom object detector implementation.
 
@@ -139,9 +139,9 @@ We implemented strict structural safeguards:
 
 ---
 
-## 🤝 Contributing
+## Contributing
 Contributions, issues, and feature requests are welcome!
 Feel free to check the [issues page](https://github.com/GughanS/renault_nissan/issues) if you want to contribute. Please refer to [CONTRIBUTING.md](CONTRIBUTING.md) and our [CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md).
 
-## 📄 License
+## License
 This project is licensed under the MIT License - see the `LICENSE` file for details.
