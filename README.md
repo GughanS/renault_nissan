@@ -69,7 +69,7 @@ docker-compose up -d --build
 ---
 
 ## Tech Stack
-* **Machine Learning**: PyTorch, Ultralytics YOLOv8, ONNX, OpenCV
+* **Machine Learning**: PyTorch, Custom YOLO Architecture (MobileNetV3 + PANet), ONNX, OpenCV
 * **Backend**: Python 3.10, FastAPI, Uvicorn
 * **Frontend**: React 18, Vite, Lucide Icons, Vanilla CSS
 * **DevOps**: Docker, Docker Compose
