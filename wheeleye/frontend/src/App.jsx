@@ -206,11 +206,12 @@ function App() {
     const hPct = `${(height / baseDim) * 100}%`;
     
     const color = getClassColor(det.class_name);
+    const isDefect = det.class_name === 'scratch' || det.class_name === 'dent';
     
     return (
       <div 
         key={index}
-        className="bbox"
+        className={`bbox ${isDefect ? 'bbox-defect' : ''}`}
         style={{
           left, top, width: wPct, height: hPct,
           borderColor: color
@@ -287,9 +288,23 @@ function App() {
                 <p>{uploadError}</p>
               </div>
             ) : (
-              <div style={{ position: 'relative', display: 'inline-block', maxWidth: '100%', maxHeight: '100%' }}>
-                <img src={previewUrl} alt="Live Inspection Frame" style={{ display: 'block', maxWidth: '100%', maxHeight: '100%', objectFit: 'contain', opacity: isUploading ? 0.3 : 1 }} />
-                {currentReport.status !== "STANDBY" && !isUploading && currentReport.detections.map(renderBBox)}
+              <div style={{ position: 'relative', display: 'block', aspectRatio: '1 / 1', maxWidth: '100%', maxHeight: '100%', margin: '0 auto' }}>
+                <img src={previewUrl} alt="Live Inspection Frame" style={{ display: 'block', width: '100%', height: '100%', objectFit: 'cover', opacity: isUploading ? 0.3 : 1 }} />
+                {(() => {
+                  if (currentReport.status === "STANDBY" || isUploading || currentReport.status === "PASS") return null;
+                  
+                  const msgStr = (currentReport.messages || []).join(" ").toLowerCase();
+                  const showDefects = msgStr.includes("defect");
+                  const showFasteners = msgStr.includes("fastener");
+                  const showWheel = msgStr.includes("wrong");
+                  
+                  return currentReport.detections.filter(det => {
+                    if ((det.class_name === 'scratch' || det.class_name === 'dent') && showDefects) return true;
+                    if (det.class_name === 'fastener' && showFasteners) return true;
+                    if (det.class_name === 'wheel' && showWheel) return true;
+                    return false;
+                  }).map(renderBBox);
+                })()}
                 
                 {isUploading && (
                   <div className="loading-overlay">

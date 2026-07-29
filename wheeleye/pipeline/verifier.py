@@ -7,7 +7,6 @@ from PIL import Image
 from wheeleye.models.detector import WheelEyeDetector
 from wheeleye.models.classifier import WheelEyeClassifier
 from wheeleye.utils.anchors import generate_anchors, decode_boxes
-from wheeleye.utils.nms import non_max_suppression
 from wheeleye.preprocessing import get_inference_transforms
 
 try:
@@ -99,7 +98,7 @@ class WheelEyeVerifier:
         if self.det_session is not None:
             input_np = input_tensor.cpu().numpy()
             input_name = self.det_session.get_inputs()[0].name
-            outputs = self.det_session.run(None, {input_name: input_np})
+            outputs = self.det_session.run(['cls_scores', 'bbox_preds'], {input_name: input_np})
             cls_scores = torch.tensor(outputs[0], device=self.device)
             bbox_preds = torch.tensor(outputs[1], device=self.device)
             return cls_scores, bbox_preds
@@ -112,7 +111,7 @@ class WheelEyeVerifier:
         if self.cls_session is not None:
             input_np = input_tensor.cpu().numpy()
             input_name = self.cls_session.get_inputs()[0].name
-            outputs = self.cls_session.run(None, {input_name: input_np})
+            outputs = self.cls_session.run(['material', 'tier', 'size'], {input_name: input_np})
             mat_out = torch.tensor(outputs[0], device=self.device)
             tier_out = torch.tensor(outputs[1], device=self.device)
             size_out = torch.tensor(outputs[2], device=self.device)
@@ -126,7 +125,7 @@ class WheelEyeVerifier:
     # ------------------------------------------------------------------
 
     def _postprocess_detections(self, cls_scores, bbox_preds,
-                                conf_thresh=0.1, iou_thresh=0.4):
+                                conf_thresh=0.45, iou_thresh=0.4):
         """Decode bounding boxes and apply NMS."""
         # cls_scores: (B, N, C), bbox_preds: (B, N, 4)
         cls_scores = torch.sigmoid(cls_scores[0])  # single image
@@ -165,7 +164,7 @@ class WheelEyeVerifier:
     # Main verification
     # ------------------------------------------------------------------
 
-    def verify(self, image_path, expected_manifest):
+    def verify(self, image_path, expected_manifest, conf_thresh=0.45):
         """
         Verify the assembly logic.
         expected_manifest: {
@@ -189,7 +188,7 @@ class WheelEyeVerifier:
         det_input = self.det_transform(original_image).unsqueeze(0).to(self.device)
         cls_scores, bbox_preds = self._run_detector(det_input)
 
-        detections = self._postprocess_detections(cls_scores, bbox_preds)
+        detections = self._postprocess_detections(cls_scores, bbox_preds, conf_thresh=conf_thresh)
 
         # The frontend assumes coordinates are on a 640x640 scale and calculates percentages.
         # We scale from model size (512) to 640.

@@ -5,6 +5,7 @@ import csv
 import math
 from PIL import Image, ImageDraw, ImageFilter, ImageEnhance
 import numpy as np
+import cv2
 
 # YOLO Classes:
 # 0: wheel_assembly
@@ -54,6 +55,31 @@ def _perlin_noise(size, scale=64):
     noise_img = noise_img.resize((w, h), Image.BILINEAR)
     return np.array(noise_img).astype(np.float64) / 255.0  # 0..1
 
+
+# ---------------------------------------------------------------------------
+# Data Augmentations
+# ---------------------------------------------------------------------------
+
+def _apply_motion_blur(img_arr, kernel_size=15):
+    """Simulate motion blur from a fast-moving conveyor belt."""
+    # Create horizontal motion blur kernel
+    kernel = np.zeros((kernel_size, kernel_size))
+    kernel[int((kernel_size - 1) / 2), :] = np.ones(kernel_size)
+    kernel /= kernel_size
+    blurred = cv2.filter2D(img_arr, -1, kernel)
+    return blurred
+
+def _draw_glare(draw, img_size):
+    """Draw a harsh glare polygon simulating lighting glare."""
+    w, h = img_size
+    poly = [
+        (random.randint(0, w // 2), 0),
+        (random.randint(w // 2, w), 0),
+        (random.randint(w // 2, w), random.randint(h // 4, h // 2)),
+        (0, random.randint(h // 4, h // 2))
+    ]
+    # Draw a polygon with low opacity white
+    draw.polygon(poly, fill=(255, 255, 255, random.randint(20, 60)))
 
 # ---------------------------------------------------------------------------
 # Factory background generator
@@ -499,6 +525,20 @@ def generate_synthetic_image(img_size=(512, 512)):
 
     # Subtle Gaussian blur to soften harsh edges
     img = img.filter(ImageFilter.GaussianBlur(radius=0.6))
+    
+    # Optional Data Augmentations
+    if random.random() > 0.5:
+        # Re-convert to array for motion blur
+        arr = np.array(img).astype(np.float32)
+        arr = _apply_motion_blur(arr, kernel_size=random.choice([9, 15, 21]))
+        img = Image.fromarray(np.clip(arr, 0, 255).astype(np.uint8))
+        
+    if random.random() > 0.5:
+        # Add glare
+        img = img.convert('RGBA')
+        draw_glare = ImageDraw.Draw(img, 'RGBA')
+        _draw_glare(draw_glare, img_size)
+        img = img.convert('RGB')
 
     # Random brightness / contrast jitter simulating factory lighting variation
     enhancer = ImageEnhance.Brightness(img)

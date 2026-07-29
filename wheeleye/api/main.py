@@ -5,6 +5,7 @@ import time
 from fastapi import FastAPI, File, UploadFile, Form
 from fastapi.middleware.cors import CORSMiddleware
 from prometheus_fastapi_instrumentator import Instrumentator
+from prometheus_client import Counter, Histogram
 from wheeleye.pipeline.verifier import WheelEyeVerifier
 
 app = FastAPI(title="WheelEye API", description="Automated Visual Inspection API for WheelEye")
@@ -21,6 +22,10 @@ app.add_middleware(
 # Instrument the app for Prometheus
 Instrumentator().instrument(app).expose(app)
 
+# Custom Metrics
+M_UNITS_TOTAL = Counter('wheeleye_units_total', 'Total units inspected')
+M_UNITS_PASSED = Counter('wheeleye_units_passed', 'Total units passed')
+M_INFERENCE_LATENCY = Histogram('wheeleye_inference_latency_seconds', 'Latency of inference')
 
 # Global instances of our models to keep them loaded in memory
 verifier = None
@@ -60,7 +65,8 @@ def get_skus():
 @app.post("/inspect")
 async def inspect_frame(
     file: UploadFile = File(...),
-    manifest: str = Form("{}")
+    manifest: str = Form("{}"),
+    conf_thresh: float = Form(0.45)
 ):
     global TOTAL_UNITS, PASSED_UNITS, TOTAL_LATENCY_MS
     
@@ -75,7 +81,7 @@ async def inspect_frame(
         
     try:
         # Run inference
-        report = verifier.verify(temp_filename, manifest_dict)
+        report = verifier.verify(temp_filename, manifest_dict, conf_thresh=conf_thresh)
     finally:
         # Clean up
         if os.path.exists(temp_filename):
@@ -86,9 +92,14 @@ async def inspect_frame(
     
     # Update stats
     TOTAL_UNITS += 1
+    M_UNITS_TOTAL.inc()
+    
     if report["status"] == "PASS":
         PASSED_UNITS += 1
+        M_UNITS_PASSED.inc()
+        
     TOTAL_LATENCY_MS += latency_ms
+    M_INFERENCE_LATENCY.observe(latency_ms / 1000.0)
     
     # Attach stats to the report so frontend can read them
     uptime_seconds = int(time.time() - START_TIME)

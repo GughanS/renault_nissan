@@ -72,11 +72,11 @@
       "targets": [
         {
           "datasource": "Prometheus",
-          "expr": "sum(rate(http_requests_total[1m]))",
+          "expr": "sum(rate(wheeleye_units_total_total[1m]))",
           "refId": "A"
         }
       ],
-      "title": "Total Inspection Rate (Requests/sec)",
+      "title": "Total Inspection Rate (Units/sec)",
       "type": "stat"
     },
     {
@@ -126,7 +126,7 @@
       "targets": [
         {
           "datasource": "Prometheus",
-          "expr": "sum(rate(http_requests_total{status=\"200\"}[1m])) / sum(rate(http_requests_total[1m])) * 100",
+          "expr": "sum(rate(wheeleye_units_passed_total[1m])) / sum(rate(wheeleye_units_total_total[1m])) * 100",
           "refId": "A"
         }
       ],
@@ -185,7 +185,7 @@
       "targets": [
         {
           "datasource": "Prometheus",
-          "expr": "sum(rate(http_request_duration_seconds_sum[1m])) / sum(rate(http_request_duration_seconds_count[1m]))",
+          "expr": "sum(rate(wheeleye_inference_latency_seconds_sum[1m])) / sum(rate(wheeleye_inference_latency_seconds_count[1m]))",
           "refId": "A"
         }
       ],
@@ -265,12 +265,12 @@
       "targets": [
         {
           "datasource": "Prometheus",
-          "expr": "rate(http_request_duration_seconds_sum[1m]) / rate(http_request_duration_seconds_count[1m])",
-          "legendFormat": "{{handler}}",
+          "expr": "rate(wheeleye_inference_latency_seconds_sum[1m]) / rate(wheeleye_inference_latency_seconds_count[1m])",
+          "legendFormat": "Inference Latency",
           "refId": "A"
         }
       ],
-      "title": "Latency by Endpoint",
+      "title": "Inference Latency History",
       "type": "timeseries"
     }
   ],

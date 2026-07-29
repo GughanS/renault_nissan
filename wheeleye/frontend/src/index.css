@@ -107,6 +107,17 @@ body {
   pointer-events: none;
 }
 
+@keyframes flash {
+  0% { opacity: 1; }
+  50% { opacity: 0.3; }
+  100% { opacity: 1; }
+}
+
+.bbox-defect {
+  border-width: 4px;
+  animation: flash 1s infinite ease-in-out;
+}
+
 .loading-overlay {
   position: absolute;
   top: 0; left: 0; right: 0; bottom: 0;
