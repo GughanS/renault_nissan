@@ -1,6 +1,6 @@
 # WheelEye: Automated Visual Inspection for Automotive Assembly
 
-![WheelEye UI Preview](https://placehold.co/1200x600/1C1C1E/4A90E2/png?text=WheelEye+Dashboard)
+![alt text](image.png)
 
 ## Overview
 **WheelEye** is an end-to-end computer vision platform designed to automate the visual inspection of automotive components on a high-speed factory line. It acts as an intelligent checkpoint that verifies wheel configurations (material, tier, size, and fastener counts) against a manufacturing manifest and detects critical assembly defects like scratches and dents.
@@ -13,7 +13,7 @@ This system demonstrates full-stack AI engineering—bridging the gap between ra
 
 - **Smart Defect Highlighting**: The UI intelligently filters out background noise, drawing bounding boxes *only* when an error occurs. Critical defects like scratches and dents flash with a high-visibility red animation to instantly alert line operators.
 - **Real-Time Observability**: Fully instrumented with Prometheus and Grafana. Custom business metrics (Pass Rate, Total Units Inspected, Average Inference Latency) are aggregated and visualized in a live dashboard.
-- **High-Speed Inference**: By utilizing ONNX exports and optimized graph execution for the custom PANet YOLOv8 detector, inference runs smoothly in <50ms on CPU, easily meeting standard factory takt times of 1-3 seconds.
+- **High-Speed Inference**: By utilizing ONNX exports and optimized graph execution for the custom PANet WHEELEYE detector, inference runs smoothly in <50ms on CPU, easily meeting standard factory takt times of 1-3 seconds.
 - **Robust Data Augmentation**: The synthetic data generator employs OpenCV to simulate factory floor conditions, including high-speed motion blur (conveyor belt simulation) and harsh overhead glare, ensuring the model remains resilient in production.
 
 ---
@@ -31,7 +31,7 @@ graph LR
     
     subgraph Backend [FastAPI]
         API[Inference API]
-        CV[YOLOv8 + Classifier]
+        CV[WHEELEYE + Classifier]
     end
     
     subgraph Observability [Prometheus & Grafana]
@@ -46,7 +46,7 @@ graph LR
 ```
 
 1. **Frontend (React + Vite)**: A sleek, dark-mode terminal interface built to resemble industrial HMIs (Human-Machine Interfaces). It features a manual upload mode and a "Simulate Line" mode that mocks a high-speed factory conveyor belt.
-2. **Backend (FastAPI)**: Serves the computer vision pipeline. It accepts image uploads and JSON manifests, runs the image through an ONNX-optimized YOLO detector and a PyTorch classifier, and returns a structured JSON report.
+2. **Backend (FastAPI)**: Serves the computer vision pipeline. It accepts image uploads and JSON manifests, runs the image through an ONNX-optimized WHEELEYE detector and a PyTorch classifier, and returns a structured JSON report.
 3. **Observability**: The backend is instrumented with Prometheus. Grafana is auto-provisioned via Docker Compose to instantly display real-time metrics.
 
 ---
@@ -69,7 +69,7 @@ docker-compose up -d --build
 ---
 
 ## Tech Stack
-* **Machine Learning**: PyTorch, Custom YOLO Architecture (MobileNetV3 + PANet), ONNX, OpenCV
+* **Machine Learning**: PyTorch, Custom WHEELEYE Architecture (MobileNetV3 + PANet), ONNX, OpenCV
 * **Backend**: Python 3.10, FastAPI, Uvicorn
 * **Frontend**: React 18, Vite, Lucide Icons, Vanilla CSS
 * **DevOps**: Docker, Docker Compose
