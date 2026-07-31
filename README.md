@@ -1,3 +1,5 @@
+# WheelEye: Automated Visual Inspection for High-Speed Automotive Assembly
+
 <div align="center">
   <img src="docs/assets/image.png" alt="WheelEye Banner" width="800">
   
