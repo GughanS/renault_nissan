@@ -3,12 +3,7 @@ import { Play, Square, Upload } from 'lucide-react'
 import mockData from './mocks/inspect.json'
 import './index.css'
 
-// Tier → expected fastener count mapping
-const TIER_FASTENER_MAP = {
-  Standard: 4,
-  Premium: 5,
-  Luxury: 6
-};
+
 
 function App() {
   const { demo_frames } = mockData;
@@ -51,8 +46,6 @@ function App() {
   const logTableRef = useRef(null);
   const fileInputRef = useRef(null);
 
-  // Compute expected fasteners from tier selection
-  const expectedFasteners = TIER_FASTENER_MAP[skuTier] || 5;
 
   // Auto-scroll logs
   useEffect(() => {
@@ -121,8 +114,7 @@ function App() {
     const manifest = {
       material: skuMaterial,
       tier: skuTier,
-      size: skuSize,
-      expected_fasteners: expectedFasteners
+      size: skuSize
     };
     formData.append('manifest', JSON.stringify(manifest));
 
@@ -177,7 +169,6 @@ function App() {
   const getClassColor = (className) => {
     switch(className) {
       case 'wheel': return 'var(--color-utility-blue)';
-      case 'fastener': return 'var(--color-utility-blue)';
       case 'scratch': return 'var(--color-fail-red)';
       case 'dent': return 'var(--color-fail-red)';
       default: return 'var(--color-utility-blue)';
@@ -290,22 +281,8 @@ function App() {
             ) : (
               <div style={{ position: 'relative', display: 'block', aspectRatio: '1 / 1', maxWidth: '100%', maxHeight: '100%', margin: '0 auto' }}>
                 <img src={previewUrl} alt="Live Inspection Frame" style={{ display: 'block', width: '100%', height: '100%', objectFit: 'cover', opacity: isUploading ? 0.3 : 1 }} />
-                {(() => {
-                  if (currentReport.status === "STANDBY" || isUploading || currentReport.status === "PASS") return null;
-                  
-                  const msgStr = (currentReport.messages || []).join(" ").toLowerCase();
-                  const showDefects = msgStr.includes("defect");
-                  const showFasteners = msgStr.includes("fastener");
-                  const showWheel = msgStr.includes("wrong");
-                  
-                  return currentReport.detections.filter(det => {
-                    if ((det.class_name === 'scratch' || det.class_name === 'dent') && showDefects) return true;
-                    if (det.class_name === 'fastener' && showFasteners) return true;
-                    if (det.class_name === 'wheel' && showWheel) return true;
-                    return false;
-                  }).map(renderBBox);
-                })()}
                 
+
                 {isUploading && (
                   <div className="loading-overlay">
                     <div className="spinner"></div>
@@ -375,9 +352,7 @@ function App() {
                 <option value="19_inch">19"</option>
               </select>
             </div>
-            <div className="sku-fastener-info mono">
-              Expected fasteners: {expectedFasteners}
-            </div>
+
           </div>
 
           <div className="verdict-panel">
@@ -397,12 +372,7 @@ function App() {
               </div>
             </div>
             
-            <div className="detail-group">
-              <div className="detail-label">Fastener Count</div>
-              <div className="fastener-count mono">
-                {currentReport.status === "STANDBY" ? `0 / ${expectedFasteners}` : `${currentReport.detections.filter(d => d.class_name === 'fastener').length} / ${expectedFasteners}`}
-              </div>
-            </div>
+
             
             {currentReport.messages && currentReport.messages.length > 0 && currentReport.status === 'FAIL' && (
               <div className="detail-group">

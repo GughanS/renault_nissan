@@ -54,11 +54,7 @@ def get_skus():
     """Return available SKU options for the frontend dropdown menus."""
     return {
         "materials": ["Steel", "Alloy"],
-        "tiers": [
-            {"name": "Standard", "expected_fasteners": 4},
-            {"name": "Premium", "expected_fasteners": 5},
-            {"name": "Luxury", "expected_fasteners": 6},
-        ],
+        "tiers": ["Standard", "Premium", "Luxury"],
         "sizes": ["17_inch", "18_inch", "19_inch"],
     }
 

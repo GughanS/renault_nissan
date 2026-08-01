@@ -22,7 +22,7 @@
 ## Overview
 **WheelEye** is an end-to-end computer vision platform designed to automate the visual inspection of automotive components on a high-speed factory line. 
 
-Acting as an intelligent checkpoint, it verifies complex configurations (material, tier, size, and fastener counts) against a manufacturing manifest while simultaneously detecting critical assembly defects like scratches and dents.
+Acting as an intelligent checkpoint, it verifies complex configurations (material, tier, and size) against a manufacturing manifest while simultaneously detecting critical assembly defects like scratches and dents.
 
 This system demonstrates full-stack AI engineering—bridging the gap between raw PyTorch models and a production-ready, deployable microservice architecture with real-time observability.
 
@@ -30,7 +30,7 @@ This system demonstrates full-stack AI engineering—bridging the gap between ra
 
 ## Key Features
 
-- **Dynamic Noise Filtering**: The frontend minimizes cognitive load on line operators by intentionally suppressing successful assembly bounds. Bounding boxes are dynamically drawn only when a component failure or defect (such as incorrect material, wrong size, or missing fasteners) is detected, providing a clean and focused interface.
+- **Clean Operator Interface**: The frontend minimizes cognitive load on line operators by intentionally suppressing complex bounding box overlays, providing a clean, focused, and intuitive interface regardless of component failure or success.
 - **Real-Time Observability**: Fully instrumented with Prometheus and Grafana. Custom business metrics (Pass Rate, Total Units Inspected, Average Inference Latency) are aggregated and visualized in a live dashboard.
 - **High-Speed Inference**: By utilizing ONNX exports and optimized graph execution for the custom PANet WheelEye detector, inference runs smoothly in **<50ms on CPU**, easily meeting standard factory takt times of 1-3 seconds.
 - **Robust Data Augmentation**: The synthetic data generator employs OpenCV to simulate harsh factory floor conditions, including high-speed motion blur (conveyor belt simulation) and overhead glare, ensuring the model remains resilient in production.

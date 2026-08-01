@@ -26,8 +26,7 @@ class TestWheelEyeVerifier(unittest.TestCase):
         manifest = {
             'material': 'Alloy',
             'tier': 'Premium',
-            'size': '18_inch',
-            'expected_fasteners': 5
+            'size': '18_inch'
         }
         
         # Since it's random weights, we might not detect a wheel.
@@ -65,8 +64,7 @@ class TestWheelEyeVerifier(unittest.TestCase):
         manifest = {
             'material': 'Alloy',
             'tier': 'Premium',
-            'size': '18_inch',
-            'expected_fasteners': 5
+            'size': '18_inch'
         }
 
         report = verifier_onnx.verify(self.dummy_image_path, manifest)

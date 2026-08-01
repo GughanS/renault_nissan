@@ -170,8 +170,7 @@ class WheelEyeVerifier:
         expected_manifest: {
             'material': 'Alloy',
             'tier': 'Premium',
-            'size': '18_inch',
-            'expected_fasteners': 5
+            'size': '18_inch'
         }
         """
         report = {
@@ -196,7 +195,6 @@ class WheelEyeVerifier:
         scale_y = 640 / self.image_size[1]
 
         wheel_box = None
-        fastener_count = 0
         defects_found = []
 
         for det in detections:
@@ -209,8 +207,6 @@ class WheelEyeVerifier:
             if det['class_name'] == 'wheel':
                 if wheel_box is None or det['score'] > wheel_box['score']:
                     wheel_box = det
-            elif det['class_name'] == 'fastener':
-                fastener_count += 1
             elif det['class_name'] in ['scratch', 'dent']:
                 defects_found.append(det['class_name'])
 
@@ -218,13 +214,6 @@ class WheelEyeVerifier:
         if defects_found:
             report['status'] = 'FAIL'
             report['messages'].append(f"Defects detected: {', '.join(defects_found)}")
-
-        # Business Logic 2: Fastener count
-        expected_fasteners = expected_manifest.get('expected_fasteners', 5)
-        if fastener_count != expected_fasteners:
-            report['status'] = 'FAIL'
-            report['messages'].append(
-                f"Expected {expected_fasteners} fasteners, found {fastener_count}")
 
         # 2. Run Classifier if a wheel is found
         if not wheel_box:
@@ -243,9 +232,18 @@ class WheelEyeVerifier:
         bx2 = rx2 * crop_scale_x
         by2 = ry2 * crop_scale_y
 
+        # Ensure correct ordering
+        bx1, bx2 = min(bx1, bx2), max(bx1, bx2)
+        by1, by2 = min(by1, by2), max(by1, by2)
+
         # Clamp to image boundaries
         bx1, by1 = max(0, int(bx1)), max(0, int(by1))
         bx2, by2 = min(orig_w, int(bx2)), min(orig_h, int(by2))
+        
+        if bx1 >= bx2 or by1 >= by2:
+            report['status'] = 'FAIL'
+            report['messages'].append("Invalid or zero-area bounding box detected.")
+            return report
 
         wheel_crop = original_image.crop((bx1, by1, bx2, by2))
         cls_input = self.cls_transform(wheel_crop).unsqueeze(0).to(self.device)

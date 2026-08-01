@@ -16,15 +16,13 @@ def main():
     parser.add_argument("--material", type=str, required=True, choices=['Steel', 'Alloy'])
     parser.add_argument("--tier", type=str, required=True, choices=['Standard', 'Premium'])
     parser.add_argument("--size", type=str, required=True, choices=['17_inch', '18_inch', '19_inch'])
-    parser.add_argument("--fasteners", type=int, default=5, help="Expected number of fasteners")
     
     args = parser.parse_args()
     
     manifest = {
         'material': args.material,
         'tier': args.tier,
-        'size': args.size,
-        'expected_fasteners': args.fasteners
+        'size': args.size
     }
     
     print("Loading pipeline...")
