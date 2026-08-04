@@ -13,11 +13,9 @@ class WheelEyeClassifier(nn.Module):
         # Extract features (remove the original classifier)
         self.features = mobilenet.features
         
-        # We also want the pooling layer and the first part of the original classifier (which is a linear + hardswish + dropout)
-        # However, for a simple custom multi-head, we can just use our own Global Average Pooling and simple Linear heads.
-        # MobileNetV3 small features output is shape (B, 576, H, W)
         self.pool = nn.AdaptiveAvgPool2d(1)
         self.flatten = nn.Flatten()
+        self.dropout = nn.Dropout(p=0.2)
         
         in_features = 576
         
@@ -31,6 +29,7 @@ class WheelEyeClassifier(nn.Module):
         x = self.features(x)
         x = self.pool(x)
         x = self.flatten(x)
+        x = self.dropout(x)
         
         material_out = self.material_head(x)
         tier_out = self.tier_head(x)
