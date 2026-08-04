@@ -1,14 +1,14 @@
 import torch
 import torch.nn as nn
-from torchvision.models import mobilenet_v3_small, MobileNet_V3_Small_Weights
+from torchvision.models import mobilenet_v3_large, MobileNet_V3_Large_Weights
 
 class WheelEyeClassifier(nn.Module):
     def __init__(self, num_material=2, num_tier=3, num_size=3):
         super().__init__()
         
-        # Load pre-trained MobileNetV3-Small
-        weights = MobileNet_V3_Small_Weights.DEFAULT
-        mobilenet = mobilenet_v3_small(weights=weights)
+        # Load pre-trained MobileNetV3-Large
+        weights = MobileNet_V3_Large_Weights.DEFAULT
+        mobilenet = mobilenet_v3_large(weights=weights)
         
         # Extract features (remove the original classifier)
         self.features = mobilenet.features
@@ -17,7 +17,7 @@ class WheelEyeClassifier(nn.Module):
         self.flatten = nn.Flatten()
         self.dropout = nn.Dropout(p=0.2)
         
-        in_features = 576
+        in_features = 960
         
         # Multi-head branches
         self.material_head = nn.Linear(in_features, num_material)
